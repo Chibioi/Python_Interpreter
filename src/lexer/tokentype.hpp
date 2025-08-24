@@ -37,6 +37,8 @@ enum TokenType {
   KW_while,
   KW_with,
   KW_yield,
+  KW_print,
+  Name,
 
   // Operators
   OP_Plus,
@@ -74,6 +76,7 @@ enum TokenType {
   OP_At,
   OP_AtAssign,
   OP_Colon, // Often handled as a punctuator, but can be an operator
+  OP_EqualEqual,
 
   // Punctuators
   PUNC_LeftParen,
@@ -88,9 +91,9 @@ enum TokenType {
 
   // Identifiers and Literals
   ID_Identifier,
-  LIT_Int,
-  LIT_Float,
-  LIT_String,
+  Int,
+  Float,
+  String,
 
   // Special Tokens
   T_Newline,
@@ -99,5 +102,17 @@ enum TokenType {
   T_EndOfFile,
 
   // Error State
-  T_Error
+  Error,
+
+  // --------Others
+  PlusEqual,
+  MinusEqual,
+  StarEqual,
+  SlashEqual,
+  ModEqual,
+  AndEqual,
+  OrEqual,
+  XorEqual,
+  LeftShiftEqual,
+  RightShiftEqual,
 };

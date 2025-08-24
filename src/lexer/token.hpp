@@ -6,9 +6,9 @@
 
 class Token {
 
-private:
   // Private members
   /*TokenType type;*/
+public:
   const std::string lexeme;
   int startline;
   int startcol;
