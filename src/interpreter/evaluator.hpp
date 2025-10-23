@@ -1,43 +1,37 @@
-#include "../lexer/token.hpp"
+#include "../gc/gc.hpp"
 #include "../parser/ast.hpp"
+#include "../scope/scope.hpp"
 #include <map>
 #include <memory>
 #include <stdexcept>
 #include <vector>
 
-class Evaluator : public NodeVisitor, public Token {
+class Evaluator : public NodeVisitor {
 public:
   Evaluator();
-  std::unique_ptr<PyObject> *visitProgramNode(ProgramNode *node) override;
-  std::unique_ptr<PyObject> *visitBlockNode(BlockNode *node) override;
-  std::unique_ptr<PyObject> *visitPrintNode(PrintNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitWhileNode(WhileNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitBreakNode(BreakNode *node) override;
-  virtual std::unique_ptr<PyObject> *
-  visitContinueNode(ContinueNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitPassNode(PassNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitIfNode(IfNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitAssignNode(AssignNode *node) override;
-  virtual std::unique_ptr<PyObject> *
-  visitTernaryOpNode(TernaryOpNode *node) override;
-  virtual std::unique_ptr<PyObject> *
-  visitBinaryOpNode(BinaryOpNode *node) override;
-  virtual std::unique_ptr<PyObject> *
-  visitUnaryOpNode(UnaryOpNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitIntNode(IntNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitFloatNode(FloatNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitNameNode(NameNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitStringNode(StringNode *node) override;
-  virtual std::unique_ptr<PyObject> *
-  visitBooleanNode(BooleanNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitNullNode(NullNode *node) override;
-  virtual std::unique_ptr<PyObject> *
-  visitFunctionNode(FunctionNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitCallNode(CallNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitReturnNode(ReturnNode *node) override;
-  virtual std::unique_ptr<PyObject> *visitClassNode(ClassNode *node) override;
-  virtual std::unique_ptr<PyObject> *
-  visitPropertyNode(PropertyNode *node) override;
+  virtual PyObject *visitProgramNode(ProgramNode *node) override;
+  virtual PyObject *visitBlockNode(BlockNode *node) override;
+  virtual PyObject *visitPrintNode(PrintNode *node) override;
+  virtual PyObject *visitWhileNode(WhileNode *node) override;
+  virtual PyObject *visitBreakNode(BreakNode *node) override;
+  virtual PyObject *visitContinueNode(ContinueNode *node) override;
+  virtual PyObject *visitPassNode(PassNode *node) override;
+  virtual PyObject *visitIfNode(IfNode *node) override;
+  virtual PyObject *visitAssignNode(AssignNode *node) override;
+  virtual PyObject *visitTernaryOpNode(TernaryOpNode *node) override;
+  virtual PyObject *visitBinaryOpNode(BinaryOpNode *node) override;
+  virtual PyObject *visitUnaryOpNode(UnaryOpNode *node) override;
+  virtual PyObject *visitIntNode(IntNode *node) override;
+  virtual PyObject *visitFloatNode(FloatNode *node) override;
+  virtual PyObject *visitNameNode(NameNode *node) override;
+  virtual PyObject *visitStringNode(StringNode *node) override;
+  virtual PyObject *visitBooleanNode(BooleanNode *node) override;
+  virtual PyObject *visitNullNode(NullNode *node) override;
+  virtual PyObject *visitFunctionNode(FunctionNode *node) override;
+  virtual PyObject *visitCallNode(CallNode *node) override;
+  virtual PyObject *visitReturnNode(ReturnNode *node) override;
+  virtual PyObject *visitClassNode(ClassNode *node) override;
+  virtual PyObject *visitPropertyNode(PropertyNode *node) override;
 
   void pushContext(Scope *frame) { contextStack.push_back(frame); }
 
@@ -70,7 +64,7 @@ public:
     }
   }
 
-  std::unique_ptr<PyObject> *getFromContext(const std::string &name) {
+  PyObject *getFromContext(const std::string &name) {
 
     if (!contextStack.empty()) {
       Scope *lastFrame = contextStack.back();
@@ -81,5 +75,14 @@ public:
   }
 
 private:
-  std::vector<std::map<std::string, std::unique_ptr<PyObject> *>> scopes;
+  GarbageCollector GC;
+  std::vector<Scope *> contextStack;
+
+  // auxiliar methods
+  PyObject *resolve(const std::string &method_name, PyObject *object,
+                    std::vector<PyObject *> args = std::vector<PyObject *>());
+
+  inline const std::string &getString(PyObject *object);
+  inline long long getInteger(PyObject *object);
+  inline bool isTruthy(PyObject *object);
 };

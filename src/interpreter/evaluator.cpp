@@ -1,16 +1,37 @@
 #include "./evaluator.hpp"
+#include "../scope/scope.hpp"
+#include "../value/primitives.hpp"
 #include <memory>
 #include <string>
 #include <vector>
 
-using unique_ptr = std::unique_ptr<PyObject>;
+// KNOW THE FUNCTION OF THIS BLOCK OF CODE
 
-unique_ptr *Evaluator::visitProgramNode(ProgramNode *node) {
+Evaluator::Evaluator() {
+
+  Scope *builtins = new Scope();
+  pushContext(builtins);
+  Scope *globals = new Scope(builtins);
+  pushContext(globals);
+
+  builtins->define("input",
+                   new PyBuiltin([](std::vector<PyObject *> args,
+                                    Interpreter *interpreter) -> PyObject * {
+                     ASSERT_ARG_SIZE(args, 0);
+
+                     std::string buffer;
+                     std::getline(std::cin, buffer);
+
+                     return new PyStr(buffer);
+                   }));
+}
+
+PyObject *Evaluator::visitProgramNode(ProgramNode *node) {
   // Push a new scope for the global environment
-  scopes.push_back(std::map<std::string, unique_ptr *>());
+  scopes.push_back(std::map<std::string, PyObject *>());
 
   // Begin the traversal by visiting the main block of statements
-  unique_ptr *result = node->body->accept(this);
+  PyObject *result = node->body->accept(this);
 
   // After execution, pop the global scope
   scopes.pop_back();
@@ -18,7 +39,7 @@ unique_ptr *Evaluator::visitProgramNode(ProgramNode *node) {
   return result;
 };
 
-unique_ptr *Evaluator::visitBlockNode(BlockNode *node) {
+PyObject *Evaluator::visitBlockNode(BlockNode *node) {
   for (AstNode *stmt : node->statements) {
     // Evaluate each statement in the block
     stmt->accept(this);
@@ -26,8 +47,8 @@ unique_ptr *Evaluator::visitBlockNode(BlockNode *node) {
   return nullptr; // Blocks don't return a value
 };
 
-unique_ptr *Evaluator::visitPrintNode(PrintNode *node) {
-  unique_ptr *result = node->args->accept(this);
+PyObject *Evaluator::visitPrintNode(PrintNode *node) {
+  PyObject *result = node->args->accept(this);
 
   // You'll need a way to convert PyObject to a string.
   // Assuming PyObject has a `toString()` method.
@@ -36,9 +57,9 @@ unique_ptr *Evaluator::visitPrintNode(PrintNode *node) {
   return nullptr;
 };
 
-unique_ptr *Evaluator::visitBinaryOpNode(BinaryOpNode *node) {
-  unique_ptr *left = node->left->accept(this);
-  unique_ptr *right = node->right->accept(this);
+PyObject *Evaluator::visitBinaryOpNode(BinaryOpNode *node) {
+  PyObject *left = node->left->accept(this);
+  PyObject *right = node->right->accept(this);
 
   switch (node->op.type) {
   case TokenType::OP_Plus:
@@ -51,9 +72,9 @@ unique_ptr *Evaluator::visitBinaryOpNode(BinaryOpNode *node) {
   }
 };
 
-unique_ptr *Evaluator::visitAssignNode(AssignNode *node) {
+PyObject *Evaluator::visitAssignNode(AssignNode *node) {
   // Evaluate the value on the right-hand side
-  unique_ptr *value = node->value->accept(this);
+  PyObject *value = node->value->accept(this);
 
   // Get the variable name from the name node on the left
   NameNode *nameNode = node->name->unwrap_name_node();
@@ -65,7 +86,7 @@ unique_ptr *Evaluator::visitAssignNode(AssignNode *node) {
   return value; // Assignment expressions can return the assigned value
 };
 
-unique_ptr *Evaluator::visitNameNode(NameNode *node) {
+PyObject *Evaluator::visitNameNode(NameNode *node) {
   std::string varName = node->get_lexeme();
 
   // Search for the variable in the current scope and then in parent scopes

@@ -16,7 +16,7 @@ void Scope::define(const std::string &name, PyObject *value) {
   auto it = this->values.find(name);
 
   if (it != values.end()) {
-    std::unique_ptr<PyObject> *tp_object = it->second;
+    PyObject *tp_object = it->second;
     tp_object->decRefCount();
     it->second = value;
 
@@ -26,7 +26,7 @@ void Scope::define(const std::string &name, PyObject *value) {
   value->incRefCount();
 }
 
-std::unique_ptr<PyObject> *Scope::get(const std::string &name) {
+PyObject *Scope::get(const std::string &name) {
 
   auto it = this->values.find(name);
 
