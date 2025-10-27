@@ -9,6 +9,8 @@
 class Evaluator : public NodeVisitor {
 public:
   Evaluator();
+  PyObject *Evaluate(ProgramNode *node);
+
   virtual PyObject *visitProgramNode(ProgramNode *node) override;
   virtual PyObject *visitBlockNode(BlockNode *node) override;
   virtual PyObject *visitPrintNode(PrintNode *node) override;

@@ -5,14 +5,16 @@
 #include <string>
 #include <vector>
 
-// KNOW THE FUNCTION OF THIS BLOCK OF CODE
+// Constructor for the evaluator class
 
 Evaluator::Evaluator() {
 
   Scope *builtins = new Scope();
-  pushContext(builtins);
-  Scope *globals = new Scope(builtins);
-  pushContext(globals);
+  pushContext(builtins); // This scope holds the predefined values (functions
+                         // and constants)
+  Scope *globals =
+      new Scope(builtins); // global scope inherits from the builtins scope
+  pushContext(globals); // holds the variables defined in the user main program
 
   builtins->define("input",
                    new PyBuiltin([](std::vector<PyObject *> args,
@@ -26,18 +28,24 @@ Evaluator::Evaluator() {
                    }));
 }
 
-PyObject *Evaluator::visitProgramNode(ProgramNode *node) {
-  // Push a new scope for the global environment
-  scopes.push_back(std::map<std::string, PyObject *>());
+PyObject *Evaluator::Evaluate(ProgramNode *node) {
 
-  // Begin the traversal by visiting the main block of statements
   PyObject *result = node->body->accept(this);
-
-  // After execution, pop the global scope
-  scopes.pop_back();
 
   return result;
 };
+
+PyObject *Evaluator::resolve(const std::string &method_name, PyObject *object,
+                             std::vector<PyObject *> args) {
+  PyObject *method_obj = object->find(method_name);
+
+  if (method_obj && method_obj->is_fn_type()) {
+    PyFunction *target = method_obj->unwrap_function_obj();
+    return target->bind(object)->call(args, this);
+
+  } else {
+  }
+}
 
 PyObject *Evaluator::visitBlockNode(BlockNode *node) {
   for (AstNode *stmt : node->statements) {
